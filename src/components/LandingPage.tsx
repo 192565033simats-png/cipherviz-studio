@@ -1,14 +1,14 @@
 import { useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Navbar } from './Navbar';
 import { Binary, GitBranch, Layers, Zap, ArrowDown, Database, Lock } from 'lucide-react';
 import logoImg from '@/assets/logo.png';
 
-interface LandingPageProps {
-  onLaunch: () => void;
-}
-
-export function LandingPage({ onLaunch }: LandingPageProps) {
+export function LandingPage() {
+  const navigate = useNavigate();
   const sectionsRef = useRef<HTMLDivElement>(null);
+
+  const onLaunch = () => navigate('/encrypt');
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -30,11 +30,10 @@ export function LandingPage({ onLaunch }: LandingPageProps) {
 
   return (
     <div ref={sectionsRef} className="min-h-screen">
-      <Navbar onSimulationClick={onLaunch} transparent />
+      <Navbar transparent />
 
       {/* Hero */}
       <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 overflow-hidden">
-        {/* Background effects */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full opacity-10"
             style={{ background: 'radial-gradient(circle, hsl(var(--gold)), transparent 70%)' }} />
@@ -44,7 +43,12 @@ export function LandingPage({ onLaunch }: LandingPageProps) {
 
         <div className="relative z-10 space-y-8 max-w-3xl">
           <div className="animate-float">
-            <img src={logoImg} alt="CipherStruct" className="h-24 mx-auto mb-4 drop-shadow-2xl" />
+            <img
+              src={logoImg}
+              alt="CipherStruct"
+              className="h-28 mx-auto mb-4 drop-shadow-2xl"
+              style={{ mixBlendMode: 'screen' }}
+            />
           </div>
 
           <h1 className="font-display text-5xl md:text-7xl font-bold leading-tight">
@@ -162,17 +166,25 @@ export function LandingPage({ onLaunch }: LandingPageProps) {
           <p className="text-muted-foreground">
             Dive into the simulation and see algorithms like never before.
           </p>
-          <button
-            onClick={onLaunch}
-            className="px-10 py-4 rounded-2xl text-lg font-semibold gold-gradient text-primary-foreground
-              hover:opacity-90 transition-all glow-gold"
-          >
-            Launch CipherStruct Studio
-          </button>
+          <div className="flex gap-4 justify-center">
+            <button
+              onClick={onLaunch}
+              className="px-10 py-4 rounded-2xl text-lg font-semibold gold-gradient text-primary-foreground
+                hover:opacity-90 transition-all glow-gold"
+            >
+              Encrypt
+            </button>
+            <button
+              onClick={() => navigate('/decrypt')}
+              className="px-10 py-4 rounded-2xl text-lg font-semibold border border-primary/30 text-primary
+                hover:bg-primary/10 transition-all"
+            >
+              Decrypt
+            </button>
+          </div>
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="border-t border-border/30 py-8 px-6 text-center text-xs text-muted-foreground">
         <p>CipherStruct Studio — Interactive DSA Visualization Engine</p>
       </footer>
