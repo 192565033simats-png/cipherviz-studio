@@ -4,9 +4,8 @@ import { CustomCursor } from '../components/CustomCursor';
 import { computeAllSteps } from '../engine/huffman';
 import { computeDecryptionSteps, DecryptionStep } from '../engine/decryption';
 import { TreeNode } from '../engine/types';
-import { Play, SkipForward, SkipBack, RotateCcw, Pause, Lock, Unlock } from 'lucide-react';
+import { Play, SkipForward, SkipBack, RotateCcw, Pause, Unlock, Sparkles, ArrowRight, Binary, GitBranch, KeyRound } from 'lucide-react';
 
-// Tree layout helpers (same as TreeView)
 interface LayoutNode {
   id: string; char: string | null; freq: number; x: number; y: number;
   left: LayoutNode | null; right: LayoutNode | null;
@@ -48,15 +47,12 @@ const DecryptPage = () => {
 
   const handleStart = useCallback(() => {
     if (!input.trim()) return;
-
     if (mode === 'text') {
-      // First encode the text, then decode it
       const encSteps = computeAllSteps(input.trim());
       const finalStep = encSteps[encSteps.length - 1];
       const binary = finalStep.encodedBinary;
       const tree = finalStep.forest[0];
       const codes = finalStep.codes;
-
       if (tree && binary) {
         const decSteps = computeDecryptionSteps(binary, tree, codes);
         setSteps(decSteps);
@@ -65,8 +61,6 @@ const DecryptPage = () => {
         setAutoPlaying(true);
       }
     } else {
-      // Binary mode needs a pre-built tree — for now, show an error or use a sample
-      // We'll need the user to provide text first to build the tree
       alert('Please use Text mode. Enter the original text to build the Huffman tree, then watch it decode.');
     }
   }, [input, mode]);
@@ -84,7 +78,6 @@ const DecryptPage = () => {
 
   useEffect(() => { if (isComplete) setAutoPlaying(false); }, [isComplete]);
 
-  // Tree layout
   const { nodes, edges, width, height } = useMemo(() => {
     if (!step?.tree) return { nodes: [] as LayoutNode[], edges: [] as any[], width: 0, height: 0 };
     const gap = 55;
@@ -183,7 +176,6 @@ const DecryptPage = () => {
               </div>
             )}
 
-            {/* Decoded output */}
             {step && step.decodedSoFar && (
               <div className="space-y-2 pt-3 border-t border-border/30">
                 <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Decoded Text</label>
@@ -193,7 +185,6 @@ const DecryptPage = () => {
               </div>
             )}
 
-            {/* Code table */}
             {step?.codes && Object.keys(step.codes).length > 0 && (
               <div className="space-y-2 pt-3 border-t border-border/30">
                 <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Code Table</label>
@@ -210,91 +201,123 @@ const DecryptPage = () => {
             )}
           </aside>
 
-          {/* Center — Tree visualization */}
+          {/* Center — Visualization */}
           <main className="flex-1 overflow-y-auto p-6 space-y-6">
-            {/* Binary string with cursor */}
-            {step && (
-              <div className="glass-panel p-5 space-y-3">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Binary Input</h3>
-                <div className="flex flex-wrap gap-0.5 font-mono text-sm">
-                  {step.binaryInput.split('').map((bit, i) => (
-                    <span
-                      key={i}
-                      className={`w-6 h-7 flex items-center justify-center rounded transition-all duration-200
-                        ${i === step.currentBitIndex
-                          ? 'bg-primary text-primary-foreground scale-110 font-bold glow-gold'
-                          : i < step.currentBitIndex
-                            ? 'bg-secondary/60 text-muted-foreground'
-                            : 'bg-secondary/30 text-secondary-foreground'
-                        }`}
-                    >
-                      {bit}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Tree */}
-            {step && nodes.length > 0 && (
-              <div className="glass-panel p-5 space-y-3">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Huffman Tree Traversal
-                </h3>
-                <div className="overflow-auto rounded-xl bg-secondary/30 p-4" style={{ maxHeight: 400 }}>
-                  <svg width={width} height={height} className="min-w-full">
-                    {edges.map((e, i) => (
-                      <g key={i}>
-                        <line x1={e.x1} y1={e.y1 + 18} x2={e.x2} y2={e.y2 - 4}
-                          stroke="hsl(var(--border))" strokeWidth={1.5} className="transition-all duration-300" />
-                        <text
-                          x={(e.x1 + e.x2) / 2 + (e.label === '0' ? -12 : 8)}
-                          y={(e.y1 + e.y2) / 2 + 10}
-                          fill="hsl(var(--muted-foreground))" fontSize={11} fontFamily="var(--font-mono)"
-                        >{e.label}</text>
-                      </g>
+            {step ? (
+              <>
+                {/* Binary string with cursor */}
+                <div className="glass-panel p-5 space-y-3">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Binary Input</h3>
+                  <div className="flex flex-wrap gap-0.5 font-mono text-sm">
+                    {step.binaryInput.split('').map((bit, i) => (
+                      <span
+                        key={i}
+                        className={`w-6 h-7 flex items-center justify-center rounded transition-all duration-200
+                          ${i === step.currentBitIndex
+                            ? 'bg-primary text-primary-foreground scale-110 font-bold glow-gold'
+                            : i < step.currentBitIndex
+                              ? 'bg-secondary/60 text-muted-foreground'
+                              : 'bg-secondary/30 text-secondary-foreground'
+                          }`}
+                      >
+                        {bit}
+                      </span>
                     ))}
-                    {nodes.map(n => {
-                      const isActive = n.id === step.activeNodeId;
-                      const isLeaf = n.char !== null;
-                      const isHighlighted = step.highlightedChar === n.char && isLeaf;
-
-                      let fill = 'hsl(var(--node-default))';
-                      if (isActive) fill = 'hsl(var(--node-active))';
-                      else if (isHighlighted) fill = 'hsl(var(--node-merged))';
-                      else if (isLeaf) fill = 'hsl(var(--node-leaf))';
-
-                      return (
-                        <g key={n.id} className="transition-all duration-300">
-                          <circle cx={n.x} cy={n.y} r={isActive ? 20 : 17} fill={fill} opacity={0.9}
-                            className="transition-all duration-300" />
-                          {isActive && (
-                            <circle cx={n.x} cy={n.y} r={24} fill="none"
-                              stroke="hsl(var(--gold))" strokeWidth={1.5} opacity={0.4}
-                              className="node-pulse" />
-                          )}
-                          {isLeaf && (
-                            <text x={n.x} y={n.y - 3} textAnchor="middle" fill="hsl(var(--background))"
-                              fontSize={12} fontWeight={600} fontFamily="var(--font-mono)">{n.char}</text>
-                          )}
-                          <text x={n.x} y={n.y + (isLeaf ? 10 : 5)} textAnchor="middle"
-                            fill={isLeaf ? 'hsl(var(--background))' : 'hsl(var(--foreground))'}
-                            fontSize={9} fontFamily="var(--font-mono)">{n.freq}</text>
-                        </g>
-                      );
-                    })}
-                  </svg>
+                  </div>
                 </div>
-              </div>
-            )}
 
-            {/* Placeholder when not started */}
-            {!step && (
+                {/* Tree */}
+                {nodes.length > 0 && (
+                  <div className="glass-panel p-5 space-y-3">
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Huffman Tree Traversal
+                    </h3>
+                    <div className="overflow-auto rounded-xl bg-secondary/30 p-4" style={{ maxHeight: 400 }}>
+                      <svg width={width} height={height} className="min-w-full">
+                        {edges.map((e, i) => (
+                          <g key={i}>
+                            <line x1={e.x1} y1={e.y1 + 18} x2={e.x2} y2={e.y2 - 4}
+                              stroke="hsl(var(--border))" strokeWidth={1.5} className="transition-all duration-300" />
+                            <text
+                              x={(e.x1 + e.x2) / 2 + (e.label === '0' ? -12 : 8)}
+                              y={(e.y1 + e.y2) / 2 + 10}
+                              fill="hsl(var(--muted-foreground))" fontSize={11} fontFamily="var(--font-mono)"
+                            >{e.label}</text>
+                          </g>
+                        ))}
+                        {nodes.map(n => {
+                          const isActive = n.id === step.activeNodeId;
+                          const isLeaf = n.char !== null;
+                          const isHighlighted = step.highlightedChar === n.char && isLeaf;
+
+                          let fill = 'hsl(var(--node-default))';
+                          if (isActive) fill = 'hsl(var(--node-active))';
+                          else if (isHighlighted) fill = 'hsl(var(--node-merged))';
+                          else if (isLeaf) fill = 'hsl(var(--node-leaf))';
+
+                          return (
+                            <g key={n.id} className="transition-all duration-300">
+                              <circle cx={n.x} cy={n.y} r={isActive ? 20 : 17} fill={fill} opacity={0.9}
+                                className="transition-all duration-300" />
+                              {isActive && (
+                                <circle cx={n.x} cy={n.y} r={24} fill="none"
+                                  stroke="hsl(var(--gold))" strokeWidth={1.5} opacity={0.4}
+                                  className="node-pulse" />
+                              )}
+                              {isLeaf && (
+                                <text x={n.x} y={n.y - 3} textAnchor="middle" fill="hsl(var(--background))"
+                                  fontSize={12} fontWeight={600} fontFamily="var(--font-mono)">{n.char}</text>
+                              )}
+                              <text x={n.x} y={n.y + (isLeaf ? 10 : 5)} textAnchor="middle"
+                                fill={isLeaf ? 'hsl(var(--background))' : 'hsl(var(--foreground))'}
+                                fontSize={9} fontFamily="var(--font-mono)">{n.freq}</text>
+                            </g>
+                          );
+                        })}
+                      </svg>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              /* Attractive empty state */
               <div className="flex items-center justify-center h-full">
-                <div className="text-center space-y-4">
-                  <Lock className="w-16 h-16 text-muted-foreground/30 mx-auto" />
-                  <p className="text-muted-foreground">Enter text and click "Start Decoding" to begin</p>
-                  <p className="text-xs text-muted-foreground/60">The text will be encoded with Huffman coding, then decoded step by step</p>
+                <div className="max-w-lg text-center space-y-8">
+                  <div className="relative mx-auto w-24 h-24">
+                    <div className="absolute inset-0 rounded-2xl gold-gradient opacity-20 animate-pulse" />
+                    <div className="absolute inset-2 rounded-xl bg-card flex items-center justify-center">
+                      <Unlock className="w-10 h-10 text-primary" />
+                    </div>
+                    <Sparkles className="absolute -top-2 -right-2 w-5 h-5 text-primary animate-float" />
+                  </div>
+
+                  <div className="space-y-3">
+                    <h2 className="font-display text-2xl md:text-3xl font-bold">
+                      <span className="gold-text">Huffman</span> Decryption Studio
+                    </h2>
+                    <p className="text-muted-foreground leading-relaxed">
+                      Enter your text in the control panel and hit <span className="text-primary font-medium">Start Decoding</span> to
+                      watch the Huffman tree traversal decode binary back into characters.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap justify-center gap-3">
+                    {[
+                      { icon: Binary, label: 'Binary Parsing' },
+                      { icon: GitBranch, label: 'Tree Traversal' },
+                      { icon: KeyRound, label: 'Character Recovery' },
+                    ].map((f, i) => (
+                      <div key={i} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-secondary/50 border border-border/30 text-sm text-muted-foreground">
+                        <f.icon className="w-3.5 h-3.5 text-primary" />
+                        {f.label}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground/60">
+                    <ArrowRight className="w-3.5 h-3.5" />
+                    <span>Type text in the left panel to begin</span>
+                  </div>
                 </div>
               </div>
             )}
