@@ -73,7 +73,7 @@ export function computeAllSteps(input: string): StepState[] {
 
   // --- PHASE: counting ---
   const freqMap: Record<string, number> = {};
-  current = { ...current, phase: 'counting' as StepState['phase'], activeCharIndex: -1 };
+  current = { ...current, phase: 'counting', activeCharIndex: -1 };
 
   for (let i = 0; i < chars.length; i++) {
     const c = chars[i];
