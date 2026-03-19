@@ -181,7 +181,7 @@ export function computeAllSteps(input: string): StepState[] {
   // --- PHASE: encoding ---
   current = {
     ...current,
-    phase: 'encoding' as StepState['phase'],
+    phase: 'encoding',
     codes: { ...codes },
     activeCodeKey: null,
   };
