@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { StepState, TreeNode } from '../engine/types';
+import { StepState, TreeNode } from '../../engine/types';
 
 interface TreeViewProps {
   state: StepState;

@@ -1,4 +1,4 @@
-import { StepState } from '../engine/types';
+import { StepState } from '../../engine/types';
 
 interface CodeTableViewProps {
   state: StepState;
