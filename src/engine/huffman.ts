@@ -97,7 +97,7 @@ export function computeAllSteps(input: string): StepState[] {
 
   current = {
     ...current,
-    phase: 'building' as StepState['phase'],
+    phase: 'building',
     freqMap: { ...freqMap },
     activeCharIndex: -1,
     activeFreqKey: null,
