@@ -1,16 +1,46 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useHuffmanEngine } from '../engine/useHuffmanEngine';
+import { ControlPanel } from '../components/ControlPanel';
+import { ExplanationPanel } from '../components/ExplanationPanel';
+import { ArrayView } from '../components/viz/ArrayView';
+import { HashTableView } from '../components/viz/HashTableView';
+import { TreeView } from '../components/viz/TreeView';
+import { CodeTableView } from '../components/viz/CodeTableView';
 
-// IMPORTANT: Fully REPLACE this with your own code
-const PlaceholderIndex = () => {
-  // PLACEHOLDER: Replace this entire return statement with the user's app.
-  // The inline background color is intentionally not part of the design system.
+const Index = () => {
+  const engine = useHuffmanEngine();
+  const { state } = engine;
+
   return (
-    <div className="flex min-h-screen items-center justify-center" style={{ backgroundColor: '#fcfbf8' }}>
-      <img data-lovable-blank-page-placeholder="REMOVE_THIS" src="/placeholder.svg" alt="Your app will live here!" />
+    <div className="h-screen flex overflow-hidden">
+      {/* Left — Controls */}
+      <aside className="w-72 flex-shrink-0 border-r border-border/50 bg-card/50 overflow-y-auto">
+        <ControlPanel engine={engine} />
+      </aside>
+
+      {/* Center — Visualization */}
+      <main className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div className="glass-panel p-5">
+          <ArrayView state={state} />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="glass-panel p-5">
+            <HashTableView state={state} />
+          </div>
+          <div className="glass-panel p-5">
+            <CodeTableView state={state} />
+          </div>
+        </div>
+        <div className="glass-panel p-5">
+          <TreeView state={state} />
+        </div>
+      </main>
+
+      {/* Right — Explanation */}
+      <aside className="w-80 flex-shrink-0 border-l border-border/50 bg-card/50 overflow-y-auto">
+        <ExplanationPanel state={state} />
+      </aside>
     </div>
   );
 };
-
-const Index = PlaceholderIndex;
 
 export default Index;
