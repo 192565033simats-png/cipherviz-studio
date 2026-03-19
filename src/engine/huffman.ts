@@ -51,7 +51,7 @@ export function computeAllSteps(input: string): StepState[] {
   const chars = input.split('');
 
   // --- PHASE: parsing ---
-  let current = { ...baseState(), inputChars: chars, phase: 'parsing' as const };
+  let current: StepState = { ...baseState(), inputChars: chars, phase: 'parsing' };
 
   steps.push({
     ...current,
