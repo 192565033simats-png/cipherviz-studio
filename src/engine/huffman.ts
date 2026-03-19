@@ -150,7 +150,7 @@ export function computeAllSteps(input: string): StepState[] {
   const sortedChars = Object.keys(codes).sort();
   current = {
     ...current,
-    phase: 'generating' as StepState['phase'],
+    phase: 'generating',
     forest: cloneForest(forest),
     activeNodeIds: [],
     mergedNodeId: null,
