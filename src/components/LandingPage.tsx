@@ -42,12 +42,9 @@ export function LandingPage() {
 
         <div className="relative z-10 space-y-8 max-w-3xl">
           <div className="animate-float">
-            <img
-              src={logoImg}
-              alt="CipherStruct"
-              className="h-28 mx-auto mb-4 drop-shadow-2xl"
-              style={{ mixBlendMode: 'screen' }}
-            />
+            <div className="w-24 h-24 mx-auto mb-4 rounded-2xl gold-gradient flex items-center justify-center glow-gold">
+              <Lock className="w-12 h-12 text-primary-foreground" />
+            </div>
           </div>
 
           <h1 className="font-display text-5xl md:text-7xl font-bold leading-tight">
