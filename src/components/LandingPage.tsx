@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Navbar } from './Navbar';
 import { Binary, GitBranch, Layers, Zap, ArrowDown, Database, Lock } from 'lucide-react';
-import logoImg from '@/assets/logo.png';
 
 export function LandingPage() {
   const navigate = useNavigate();
