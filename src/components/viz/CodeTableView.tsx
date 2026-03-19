@@ -1,11 +1,12 @@
-import { StepState } from '../../engine/types';
+import { Step } from '../../engine/types';
 
 interface CodeTableViewProps {
-  state: StepState;
+  step: Step;
 }
 
-export function CodeTableView({ state }: CodeTableViewProps) {
-  const { codes, activeCodeKey } = state;
+export function CodeTableView({ step }: CodeTableViewProps) {
+  const codes = step.snapshot.codes;
+  const activeCodeKey = step.highlight.activeCodeKey;
   const entries = Object.entries(codes).sort((a, b) => a[0].localeCompare(b[0]));
 
   if (entries.length === 0) return null;

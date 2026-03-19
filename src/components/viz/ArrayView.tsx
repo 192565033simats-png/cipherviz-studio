@@ -1,11 +1,12 @@
-import { StepState } from '../../engine/types';
+import { Step } from '../../engine/types';
 
 interface ArrayViewProps {
-  state: StepState;
+  step: Step;
 }
 
-export function ArrayView({ state }: ArrayViewProps) {
-  const { inputChars, activeCharIndex } = state;
+export function ArrayView({ step }: ArrayViewProps) {
+  const { inputChars } = step.snapshot;
+  const activeCharIndex = step.highlight.charIndex;
 
   if (inputChars.length === 0) {
     return (

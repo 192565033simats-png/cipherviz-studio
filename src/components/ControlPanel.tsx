@@ -11,7 +11,7 @@ interface ControlPanelProps {
 
 export function ControlPanel({ engine, onSimulate, autoPlaying, onToggleAutoPlay }: ControlPanelProps) {
   const [input, setInput] = useState('hello world');
-  const { isStarted, isComplete, currentStep, totalSteps } = engine;
+  const { isStarted, isComplete, currentStep, totalSteps, currentStepData } = engine;
 
   const handleStart = () => {
     if (input.trim()) {
@@ -26,7 +26,6 @@ export function ControlPanel({ engine, onSimulate, autoPlaying, onToggleAutoPlay
   return (
     <div className="flex flex-col h-full">
       <div className="p-5 space-y-5">
-        {/* Header */}
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <Zap className="w-5 h-5 text-primary" />
@@ -35,7 +34,6 @@ export function ControlPanel({ engine, onSimulate, autoPlaying, onToggleAutoPlay
           <p className="text-xs text-muted-foreground">Interactive Huffman Coding Engine</p>
         </div>
 
-        {/* Input */}
         <div className="space-y-2">
           <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
             Input Text
@@ -51,7 +49,6 @@ export function ControlPanel({ engine, onSimulate, autoPlaying, onToggleAutoPlay
           />
         </div>
 
-        {/* Controls */}
         <div className="space-y-2">
           {!isStarted ? (
             <button
@@ -116,12 +113,11 @@ export function ControlPanel({ engine, onSimulate, autoPlaying, onToggleAutoPlay
           )}
         </div>
 
-        {/* Progress */}
         {isStarted && (
           <div className="space-y-2">
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>Step {currentStep + 1} / {totalSteps}</span>
-              <span className="capitalize font-medium text-foreground">{engine.state.phase}</span>
+              <span className="capitalize font-medium text-foreground">{currentStepData.phase}</span>
             </div>
             <div className="h-1.5 bg-muted rounded-full overflow-hidden">
               <div
@@ -132,7 +128,6 @@ export function ControlPanel({ engine, onSimulate, autoPlaying, onToggleAutoPlay
           </div>
         )}
 
-        {/* Phase indicator */}
         {isStarted && (
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -143,7 +138,7 @@ export function ControlPanel({ engine, onSimulate, autoPlaying, onToggleAutoPlay
                 <span
                   key={phase}
                   className={`px-2 py-1 rounded-md text-[10px] font-medium uppercase tracking-wider transition-all
-                    ${engine.state.phase === phase
+                    ${currentStepData.phase === phase
                       ? 'bg-primary/20 text-primary ring-1 ring-primary/30'
                       : 'bg-secondary/50 text-muted-foreground'
                     }`}
