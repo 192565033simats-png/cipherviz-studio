@@ -6,7 +6,7 @@ interface HashTableViewProps {
 
 export function HashTableView({ state }: HashTableViewProps) {
   const { freqMap, activeFreqKey } = state;
-  const entries = Object.entries(freqMap).sort((a, b) => b[1] - a[1]);
+  const entries = Object.entries(freqMap).sort((a, b) => (b[1] as number) - (a[1] as number)) as [string, number][];
 
   if (entries.length === 0) {
     return (
