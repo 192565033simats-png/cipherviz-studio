@@ -1,33 +1,41 @@
 import { useState, useCallback } from 'react';
-import { HuffmanEngine, StepState } from './types';
+import { HuffmanEngine, Step } from './types';
 import { computeAllSteps } from './huffman';
 
-const idleState: StepState = {
+const idleStep: Step = {
+  index: 0,
   phase: 'idle',
-  stepIndex: 0,
-  description: 'Enter text and press Start to begin.',
-  detail: 'CipherStruct Studio will walk you through the Huffman Coding algorithm step by step, showing how data structures evolve at each stage.',
+  action: 'Enter text and press Start to begin.',
+  explanation:
+    'CipherStruct Studio will walk you through the Huffman Coding algorithm step by step, showing how data structures evolve at each stage.',
   dataStructure: '',
-  inputChars: [],
-  activeCharIndex: -1,
-  freqMap: {},
-  activeFreqKey: null,
-  forest: [],
-  activeNodeIds: [],
-  mergedNodeId: null,
-  codes: {},
-  activeCodeKey: null,
-  encodedBinary: '',
-  encodingProgress: -1,
+  snapshot: {
+    input: '',
+    inputChars: [],
+    frequencyMap: {},
+    priorityQueue: [],
+    tree: null,
+    codes: {},
+    encodedOutput: '',
+    encodingProgress: -1,
+  },
+  highlight: {
+    nodes: [],
+    characters: [],
+    charIndex: -1,
+    mergedNodeId: null,
+    activeCodeKey: null,
+  },
 };
 
 export function useHuffmanEngine(): HuffmanEngine {
-  const [steps, setSteps] = useState<StepState[]>([]);
+  const [steps, setSteps] = useState<Step[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
   const [isStarted, setIsStarted] = useState(false);
 
-  const state = isStarted && steps.length > 0 ? steps[currentStep] : idleState;
-  const isComplete = state.phase === 'complete';
+  const currentStepData =
+    isStarted && steps.length > 0 ? steps[currentStep] : idleStep;
+  const isComplete = currentStepData.phase === 'complete';
 
   const start = useCallback((input: string) => {
     if (!input.trim()) return;
@@ -38,11 +46,11 @@ export function useHuffmanEngine(): HuffmanEngine {
   }, []);
 
   const next = useCallback(() => {
-    setCurrentStep(s => Math.min(s + 1, steps.length - 1));
+    setCurrentStep((s) => Math.min(s + 1, steps.length - 1));
   }, [steps.length]);
 
   const prev = useCallback(() => {
-    setCurrentStep(s => Math.max(s - 1, 0));
+    setCurrentStep((s) => Math.max(s - 1, 0));
   }, []);
 
   const reset = useCallback(() => {
@@ -51,12 +59,15 @@ export function useHuffmanEngine(): HuffmanEngine {
     setIsStarted(false);
   }, []);
 
-  const goToStep = useCallback((n: number) => {
-    setCurrentStep(Math.max(0, Math.min(n, steps.length - 1)));
-  }, [steps.length]);
+  const goToStep = useCallback(
+    (n: number) => {
+      setCurrentStep(Math.max(0, Math.min(n, steps.length - 1)));
+    },
+    [steps.length]
+  );
 
   return {
-    state,
+    currentStepData,
     steps,
     currentStep,
     totalSteps: steps.length,
