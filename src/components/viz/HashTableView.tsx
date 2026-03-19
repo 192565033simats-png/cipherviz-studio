@@ -1,11 +1,12 @@
-import { StepState } from '../../engine/types';
+import { Step } from '../../engine/types';
 
 interface HashTableViewProps {
-  state: StepState;
+  step: Step;
 }
 
-export function HashTableView({ state }: HashTableViewProps) {
-  const { freqMap, activeFreqKey } = state;
+export function HashTableView({ step }: HashTableViewProps) {
+  const freqMap = step.snapshot.frequencyMap;
+  const activeFreqKey = step.highlight.characters[0] ?? null;
   const entries = Object.entries(freqMap).sort((a, b) => (b[1] as number) - (a[1] as number)) as [string, number][];
 
   if (entries.length === 0) {
@@ -23,7 +24,7 @@ export function HashTableView({ state }: HashTableViewProps) {
       </h3>
       <div className="grid gap-1.5">
         {entries.map(([char, freq]) => {
-          const isActive = char === activeFreqKey;
+          const isActive = char === activeFreqKey && step.phase === 'counting';
           const maxFreq = Math.max(...entries.map(e => e[1]));
           const barWidth = (freq / maxFreq) * 100;
 

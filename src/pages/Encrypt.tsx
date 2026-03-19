@@ -12,7 +12,7 @@ import { Lock, Sparkles, ArrowRight, Binary, Layers, GitBranch } from 'lucide-re
 
 const Encrypt = () => {
   const engine = useHuffmanEngine();
-  const { state } = engine;
+  const step = engine.currentStepData;
   const [autoPlaying, setAutoPlaying] = useState(false);
   const autoPlayRef = useRef<ReturnType<typeof setInterval>>();
 
@@ -57,7 +57,6 @@ const Encrypt = () => {
             {showEmpty ? (
               <div className="flex items-center justify-center h-full">
                 <div className="max-w-lg text-center space-y-8">
-                  {/* Animated icon */}
                   <div className="relative mx-auto w-24 h-24">
                     <div className="absolute inset-0 rounded-2xl gold-gradient opacity-20 animate-pulse" />
                     <div className="absolute inset-2 rounded-xl bg-card flex items-center justify-center">
@@ -76,7 +75,6 @@ const Encrypt = () => {
                     </p>
                   </div>
 
-                  {/* Feature pills */}
                   <div className="flex flex-wrap justify-center gap-3">
                     {[
                       { icon: Layers, label: 'Array Processing' },
@@ -99,25 +97,25 @@ const Encrypt = () => {
             ) : (
               <>
                 <div className="glass-panel p-5">
-                  <ArrayView state={state} />
+                  <ArrayView step={step} />
                 </div>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div className="glass-panel p-5">
-                    <HashTableView state={state} />
+                    <HashTableView step={step} />
                   </div>
                   <div className="glass-panel p-5">
-                    <CodeTableView state={state} />
+                    <CodeTableView step={step} />
                   </div>
                 </div>
                 <div className="glass-panel p-5">
-                  <TreeView state={state} />
+                  <TreeView step={step} />
                 </div>
               </>
             )}
           </main>
 
           <aside className="w-80 flex-shrink-0 border-l border-border/30 bg-card/50 overflow-y-auto">
-            <ExplanationPanel state={state} />
+            <ExplanationPanel step={step} />
           </aside>
         </div>
       </div>

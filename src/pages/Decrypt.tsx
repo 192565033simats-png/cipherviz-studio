@@ -35,7 +35,6 @@ function collectNodes(node: LayoutNode | null, nodes: LayoutNode[]) {
 
 const DecryptPage = () => {
   const [input, setInput] = useState('');
-  const [mode, setMode] = useState<'text' | 'binary'>('text');
   const [steps, setSteps] = useState<DecryptionStep[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
   const [isStarted, setIsStarted] = useState(false);
@@ -47,23 +46,19 @@ const DecryptPage = () => {
 
   const handleStart = useCallback(() => {
     if (!input.trim()) return;
-    if (mode === 'text') {
-      const encSteps = computeAllSteps(input.trim());
-      const finalStep = encSteps[encSteps.length - 1];
-      const binary = finalStep.encodedBinary;
-      const tree = finalStep.forest[0];
-      const codes = finalStep.codes;
-      if (tree && binary) {
-        const decSteps = computeDecryptionSteps(binary, tree, codes);
-        setSteps(decSteps);
-        setCurrentStep(0);
-        setIsStarted(true);
-        setAutoPlaying(true);
-      }
-    } else {
-      alert('Please use Text mode. Enter the original text to build the Huffman tree, then watch it decode.');
+    const encSteps = computeAllSteps(input.trim());
+    const finalStep = encSteps[encSteps.length - 1];
+    const binary = finalStep.snapshot.encodedOutput;
+    const tree = finalStep.snapshot.priorityQueue[0];
+    const codes = finalStep.snapshot.codes;
+    if (tree && binary) {
+      const decSteps = computeDecryptionSteps(binary, tree, codes);
+      setSteps(decSteps);
+      setCurrentStep(0);
+      setIsStarted(true);
+      setAutoPlaying(true);
     }
-  }, [input, mode]);
+  }, [input]);
 
   const next = useCallback(() => setCurrentStep(s => Math.min(s + 1, steps.length - 1)), [steps.length]);
   const prev = useCallback(() => setCurrentStep(s => Math.max(s - 1, 0)), []);
@@ -97,7 +92,6 @@ const DecryptPage = () => {
       <div className="h-screen flex flex-col overflow-hidden">
         <Navbar />
         <div className="flex flex-1 overflow-hidden pt-16">
-          {/* Left — Controls */}
           <aside className="w-80 flex-shrink-0 border-r border-border/30 bg-card/50 overflow-y-auto p-5 space-y-5">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
@@ -201,11 +195,9 @@ const DecryptPage = () => {
             )}
           </aside>
 
-          {/* Center — Visualization */}
           <main className="flex-1 overflow-y-auto p-6 space-y-6">
             {step ? (
               <>
-                {/* Binary string with cursor */}
                 <div className="glass-panel p-5 space-y-3">
                   <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Binary Input</h3>
                   <div className="flex flex-wrap gap-0.5 font-mono text-sm">
@@ -226,7 +218,6 @@ const DecryptPage = () => {
                   </div>
                 </div>
 
-                {/* Tree */}
                 {nodes.length > 0 && (
                   <div className="glass-panel p-5 space-y-3">
                     <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -280,7 +271,6 @@ const DecryptPage = () => {
                 )}
               </>
             ) : (
-              /* Attractive empty state */
               <div className="flex items-center justify-center h-full">
                 <div className="max-w-lg text-center space-y-8">
                   <div className="relative mx-auto w-24 h-24">
@@ -323,7 +313,6 @@ const DecryptPage = () => {
             )}
           </main>
 
-          {/* Right — Explanation */}
           <aside className="w-80 flex-shrink-0 border-l border-border/30 bg-card/50 overflow-y-auto p-5 space-y-5">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Step Explanation</h2>
             {step ? (

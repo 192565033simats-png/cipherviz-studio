@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
-import { StepState, TreeNode } from '../../engine/types';
+import { Step, TreeNode } from '../../engine/types';
 
 interface TreeViewProps {
-  state: StepState;
+  step: Step;
 }
 
 interface LayoutNode {
@@ -43,8 +43,10 @@ function collectNodes(node: LayoutNode | null, nodes: LayoutNode[]) {
   collectNodes(node.right, nodes);
 }
 
-export function TreeView({ state }: TreeViewProps) {
-  const { forest, activeNodeIds, mergedNodeId } = state;
+export function TreeView({ step }: TreeViewProps) {
+  const forest = step.snapshot.priorityQueue;
+  const activeNodeIds = step.highlight.nodes;
+  const mergedNodeId = step.highlight.mergedNodeId;
 
   const { nodes, edges, width, height } = useMemo(() => {
     if (forest.length === 0) return { nodes: [] as LayoutNode[], edges: [] as any[], width: 0, height: 0 };
