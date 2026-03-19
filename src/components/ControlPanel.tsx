@@ -1,17 +1,26 @@
 import { useState } from 'react';
 import { HuffmanEngine } from '../engine/types';
-import { Play, SkipForward, SkipBack, RotateCcw, Zap } from 'lucide-react';
+import { Play, SkipForward, SkipBack, RotateCcw, Zap, Pause } from 'lucide-react';
 
 interface ControlPanelProps {
   engine: HuffmanEngine;
+  onSimulate?: (input: string) => void;
+  autoPlaying?: boolean;
+  onToggleAutoPlay?: () => void;
 }
 
-export function ControlPanel({ engine }: ControlPanelProps) {
+export function ControlPanel({ engine, onSimulate, autoPlaying, onToggleAutoPlay }: ControlPanelProps) {
   const [input, setInput] = useState('hello world');
   const { isStarted, isComplete, currentStep, totalSteps } = engine;
 
   const handleStart = () => {
-    if (input.trim()) engine.start(input);
+    if (input.trim()) {
+      if (onSimulate) {
+        onSimulate(input);
+      } else {
+        engine.start(input);
+      }
+    }
   };
 
   return (
@@ -21,7 +30,7 @@ export function ControlPanel({ engine }: ControlPanelProps) {
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <Zap className="w-5 h-5 text-primary" />
-            <h1 className="text-lg font-semibold tracking-tight">CipherStruct</h1>
+            <h1 className="text-lg font-semibold tracking-tight gold-text">CipherStruct</h1>
           </div>
           <p className="text-xs text-muted-foreground">Interactive Huffman Coding Engine</p>
         </div>
@@ -49,44 +58,60 @@ export function ControlPanel({ engine }: ControlPanelProps) {
               onClick={handleStart}
               disabled={!input.trim()}
               className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl
-                bg-primary text-primary-foreground font-medium text-sm
+                gold-gradient text-primary-foreground font-medium text-sm
                 hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed
-                glow-primary"
+                glow-gold"
             >
               <Play className="w-4 h-4" />
-              Start Visualization
+              Simulate
             </button>
           ) : (
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                onClick={engine.prev}
-                disabled={currentStep === 0}
-                className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl
-                  bg-secondary text-secondary-foreground text-sm font-medium
-                  hover:bg-secondary/80 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-              >
-                <SkipBack className="w-3.5 h-3.5" />
-                Prev
-              </button>
-              <button
-                onClick={engine.next}
-                disabled={isComplete}
-                className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl
-                  bg-primary text-primary-foreground text-sm font-medium
-                  hover:opacity-90 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-              >
-                Next
-                <SkipForward className="w-3.5 h-3.5" />
-              </button>
-              <button
-                onClick={engine.reset}
-                className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl
-                  bg-destructive/10 text-destructive text-sm font-medium
-                  hover:bg-destructive/20 transition-all"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                Reset
-              </button>
+            <div className="space-y-2">
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  onClick={engine.prev}
+                  disabled={currentStep === 0 || autoPlaying}
+                  className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl
+                    bg-secondary text-secondary-foreground text-sm font-medium
+                    hover:bg-secondary/80 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <SkipBack className="w-3.5 h-3.5" />
+                  Prev
+                </button>
+                <button
+                  onClick={engine.next}
+                  disabled={isComplete || autoPlaying}
+                  className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl
+                    gold-gradient text-primary-foreground text-sm font-medium
+                    hover:opacity-90 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  Next
+                  <SkipForward className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={engine.reset}
+                  className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl
+                    crimson-gradient text-accent-foreground text-sm font-medium
+                    hover:opacity-90 transition-all"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  Reset
+                </button>
+              </div>
+              {onToggleAutoPlay && (
+                <button
+                  onClick={onToggleAutoPlay}
+                  disabled={isComplete}
+                  className={`w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all
+                    ${autoPlaying
+                      ? 'bg-accent/20 text-accent-foreground border border-accent/30'
+                      : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                    } disabled:opacity-30`}
+                >
+                  {autoPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+                  {autoPlaying ? 'Pause Auto-Play' : 'Auto-Play'}
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -100,7 +125,7 @@ export function ControlPanel({ engine }: ControlPanelProps) {
             </div>
             <div className="h-1.5 bg-muted rounded-full overflow-hidden">
               <div
-                className="h-full bg-primary rounded-full transition-all duration-300"
+                className="h-full gold-gradient rounded-full transition-all duration-300"
                 style={{ width: `${((currentStep + 1) / totalSteps) * 100}%` }}
               />
             </div>
