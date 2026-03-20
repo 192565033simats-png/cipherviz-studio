@@ -153,30 +153,99 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* CTA */}
+      {/* About */}
       <section id="about" className="py-32 px-6">
-        <div className="reveal opacity-0 translate-y-12 transition-all duration-700 max-w-2xl mx-auto text-center space-y-6">
-          <h2 className="font-display text-3xl md:text-4xl font-bold">
-            Ready to <span className="gold-text">Explore</span>?
-          </h2>
-          <p className="text-muted-foreground">
-            Dive into the simulation and see algorithms like never before.
-          </p>
-          <div className="flex gap-4 justify-center">
-            <button
-              onClick={onLaunch}
-              className="px-10 py-4 rounded-2xl text-lg font-semibold gold-gradient text-primary-foreground
-                hover:opacity-90 transition-all glow-gold"
-            >
-              Encrypt
-            </button>
-            <button
-              onClick={() => navigate('/decrypt')}
-              className="px-10 py-4 rounded-2xl text-lg font-semibold border border-primary/30 text-primary
-                hover:bg-primary/10 transition-all"
-            >
-              Decrypt
-            </button>
+        <div className="max-w-4xl mx-auto space-y-16">
+          <div className="reveal opacity-0 translate-y-12 transition-all duration-700 text-center space-y-4">
+            <h2 className="font-display text-3xl md:text-4xl font-bold">
+              🧠 About <span className="gold-text">CipherStruct</span> Studio
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+              CipherStruct Studio is an interactive web application designed to visualize how data structures and algorithms work internally during data processing.
+            </p>
+            <p className="text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+              Unlike traditional tools that only show final results, this platform focuses on <span className="text-primary font-medium">step-by-step simulation</span>, allowing users to observe how data transforms through structures like arrays, hash tables, and trees.
+            </p>
+          </div>
+
+          <div className="reveal opacity-0 translate-y-12 transition-all duration-700 glass-panel p-8 space-y-5" style={{ transitionDelay: '100ms' }}>
+            <h3 className="font-display text-xl font-bold">🎯 What This System Does</h3>
+            <ul className="space-y-3 text-muted-foreground">
+              <li className="flex items-start gap-3"><span className="text-primary mt-0.5">▸</span> Demonstrates algorithm execution one step at a time</li>
+              <li className="flex items-start gap-3"><span className="text-primary mt-0.5">▸</span> Visualizes how data moves through:</li>
+            </ul>
+            <div className="flex flex-wrap gap-3 pl-6">
+              {[
+                { emoji: '📦', label: 'Arrays' },
+                { emoji: '🔑', label: 'Hash Tables' },
+                { emoji: '🌲', label: 'Huffman Trees' },
+              ].map((ds) => (
+                <div key={ds.label} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-secondary/50 border border-border/30 text-sm text-foreground">
+                  <span>{ds.emoji}</span> {ds.label}
+                </div>
+              ))}
+            </div>
+            <ul className="space-y-3 text-muted-foreground">
+              <li className="flex items-start gap-3"><span className="text-primary mt-0.5">▸</span> Highlights active elements during processing</li>
+              <li className="flex items-start gap-3"><span className="text-primary mt-0.5">▸</span> Provides clear explanations for every step</li>
+            </ul>
+          </div>
+
+          <div className="reveal opacity-0 translate-y-12 transition-all duration-700 glass-panel p-8 space-y-5" style={{ transitionDelay: '200ms' }}>
+            <h3 className="font-display text-xl font-bold">🎬 Why It's Different</h3>
+            <p className="text-muted-foreground">Instead of just showing output, CipherStruct Studio helps users:</p>
+            <ul className="space-y-3 text-muted-foreground">
+              <li className="flex items-start gap-3"><span className="text-primary mt-0.5">▸</span> <strong className="text-foreground">See</strong> how algorithms work</li>
+              <li className="flex items-start gap-3"><span className="text-primary mt-0.5">▸</span> <strong className="text-foreground">Understand</strong> why each step happens</li>
+              <li className="flex items-start gap-3"><span className="text-primary mt-0.5">▸</span> <strong className="text-foreground">Interact</strong> with the process using controls</li>
+            </ul>
+            <div className="flex flex-wrap gap-2 pt-2">
+              {['▶ Start', '⏭ Next', '⏮ Previous', '🔄 Reset'].map((ctrl) => (
+                <span key={ctrl} className="px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-xs font-medium border border-primary/20">
+                  {ctrl}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="reveal opacity-0 translate-y-12 transition-all duration-700 glass-panel p-8 space-y-4" style={{ transitionDelay: '300ms' }}>
+              <h3 className="font-display text-xl font-bold">🧠 Learning Focus</h3>
+              <p className="text-muted-foreground">Built to make abstract concepts simple through visual, interactive experiences:</p>
+              <ul className="space-y-2 text-muted-foreground">
+                <li className="flex items-start gap-3"><span className="text-primary mt-0.5">▸</span> Data Structures</li>
+                <li className="flex items-start gap-3"><span className="text-primary mt-0.5">▸</span> Algorithm Design</li>
+                <li className="flex items-start gap-3"><span className="text-primary mt-0.5">▸</span> Huffman Coding</li>
+              </ul>
+            </div>
+
+            <div className="reveal opacity-0 translate-y-12 transition-all duration-700 glass-panel p-8 space-y-4" style={{ transitionDelay: '400ms' }}>
+              <h3 className="font-display text-xl font-bold">🌟 Goal</h3>
+              <p className="text-muted-foreground leading-relaxed">
+                To transform complex algorithm logic into a clear, engaging, and easy-to-understand simulation — helping users <span className="text-primary font-medium">learn by seeing and interacting</span> rather than memorizing.
+              </p>
+            </div>
+          </div>
+
+          {/* CTA */}
+          <div className="reveal opacity-0 translate-y-12 transition-all duration-700 text-center space-y-6 pt-8" style={{ transitionDelay: '500ms' }}>
+            <h3 className="font-display text-2xl md:text-3xl font-bold">
+              Ready to <span className="gold-text">Explore</span>?
+            </h3>
+            <div className="flex gap-4 justify-center">
+              <button
+                onClick={onLaunch}
+                className="px-10 py-4 rounded-2xl text-lg font-semibold gold-gradient text-primary-foreground hover:opacity-90 transition-all glow-gold"
+              >
+                Encrypt
+              </button>
+              <button
+                onClick={() => navigate('/decrypt')}
+                className="px-10 py-4 rounded-2xl text-lg font-semibold border border-primary/30 text-primary hover:bg-primary/10 transition-all"
+              >
+                Decrypt
+              </button>
+            </div>
           </div>
         </div>
       </section>

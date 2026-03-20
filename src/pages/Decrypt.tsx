@@ -170,12 +170,31 @@ const DecryptPage = () => {
               </div>
             )}
 
-            {step && step.decodedSoFar && (
+            {step && (
               <div className="space-y-2 pt-3 border-t border-border/30">
-                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Decoded Text</label>
-                <div className="p-3 rounded-xl bg-secondary/50">
-                  <p className="font-mono text-sm text-primary break-all">{step.decodedSoFar}</p>
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                  <Sparkles className="w-3.5 h-3.5 text-primary" />
+                  Decoded Plaintext
+                </label>
+                <div className={`p-4 rounded-xl border-2 transition-all duration-300 ${
+                  step.decodedSoFar
+                    ? 'bg-primary/10 border-primary/40 glow-gold'
+                    : 'bg-secondary/30 border-border/30'
+                }`}>
+                  {step.decodedSoFar ? (
+                    <p className="font-mono text-base font-semibold text-primary break-all tracking-wide leading-relaxed">
+                      {step.decodedSoFar}
+                    </p>
+                  ) : (
+                    <p className="font-mono text-sm text-muted-foreground/50 italic">Awaiting decoded characters...</p>
+                  )}
                 </div>
+                {step.isComplete && step.decodedSoFar && (
+                  <div className="flex items-center gap-2 text-xs text-primary font-medium">
+                    <Sparkles className="w-3 h-3" />
+                    Decoding complete — {step.decodedSoFar.length} characters recovered
+                  </div>
+                )}
               </div>
             )}
 
