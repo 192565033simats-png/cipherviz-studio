@@ -49,7 +49,8 @@ const DecryptPage = () => {
     const encSteps = computeAllSteps(input.trim());
     const finalStep = encSteps[encSteps.length - 1];
     const binary = finalStep.snapshot.encodedOutput;
-    const tree = finalStep.snapshot.priorityQueue[0];
+    // Use snapshot.tree (the complete Huffman tree), fallback to priorityQueue[0]
+    const tree = finalStep.snapshot.tree ?? finalStep.snapshot.priorityQueue[0];
     const codes = finalStep.snapshot.codes;
     if (tree && binary) {
       const decSteps = computeDecryptionSteps(binary, tree, codes);
