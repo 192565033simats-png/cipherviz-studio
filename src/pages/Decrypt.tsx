@@ -4,7 +4,7 @@ import { CustomCursor } from '../components/CustomCursor';
 import { computeAllSteps } from '../engine/huffman';
 import { computeDecryptionSteps, DecryptionStep } from '../engine/decryption';
 import { TreeNode } from '../engine/types';
-import { Play, SkipForward, SkipBack, RotateCcw, Pause, Unlock, Sparkles, ArrowRight, Binary, GitBranch, KeyRound } from 'lucide-react';
+import { Play, SkipForward, SkipBack, RotateCcw, Pause, Unlock, Sparkles, ArrowRight, Binary, GitBranch, KeyRound, FileText } from 'lucide-react';
 
 interface LayoutNode {
   id: string; char: string | null; freq: number; x: number; y: number;
@@ -92,13 +92,14 @@ const DecryptPage = () => {
       <div className="h-screen flex flex-col overflow-hidden">
         <Navbar />
         <div className="flex flex-1 overflow-hidden pt-16">
+          {/* LEFT PANEL — Controls */}
           <aside className="w-80 flex-shrink-0 border-r border-border/30 bg-card/50 overflow-y-auto p-5 space-y-5">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <Unlock className="w-5 h-5 text-primary" />
                 <h1 className="text-lg font-semibold tracking-tight gold-text">Decryption</h1>
               </div>
-              <p className="text-xs text-muted-foreground">Step-by-step Huffman Decoding</p>
+              <p className="text-xs text-muted-foreground">Binary → Huffman Decode → ASCII → Plaintext</p>
             </div>
 
             <div className="space-y-2">
@@ -114,9 +115,6 @@ const DecryptPage = () => {
                   border border-border/50 focus:border-primary/50 focus:outline-none focus:ring-1 focus:ring-primary/20
                   placeholder:text-muted-foreground/40 transition-all disabled:opacity-50"
               />
-              <p className="text-[10px] text-muted-foreground">
-                The text will be Huffman-encoded first, then decoded step-by-step showing tree traversal.
-              </p>
             </div>
 
             {!isStarted ? (
@@ -162,6 +160,9 @@ const DecryptPage = () => {
               <div className="space-y-2">
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>Step {currentStep + 1} / {steps.length}</span>
+                  <span className="uppercase text-[10px] font-semibold tracking-wider text-primary">
+                    {step.phase === 'traversal' ? '🌲 Tree Traversal' : step.phase === 'ascii-conversion' ? '🔤 ASCII Conversion' : '✅ Complete'}
+                  </span>
                 </div>
                 <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                   <div className="h-full gold-gradient rounded-full transition-all duration-300"
@@ -170,34 +171,7 @@ const DecryptPage = () => {
               </div>
             )}
 
-            {step && (
-              <div className="space-y-2 pt-3 border-t border-border/30">
-                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                  <Sparkles className="w-3.5 h-3.5 text-primary" />
-                  Decoded Plaintext
-                </label>
-                <div className={`p-4 rounded-xl border-2 transition-all duration-300 ${
-                  step.decodedSoFar
-                    ? 'bg-primary/10 border-primary/40 glow-gold'
-                    : 'bg-secondary/30 border-border/30'
-                }`}>
-                  {step.decodedSoFar ? (
-                    <p className="font-mono text-base font-semibold text-primary break-all tracking-wide leading-relaxed">
-                      {step.decodedSoFar}
-                    </p>
-                  ) : (
-                    <p className="font-mono text-sm text-muted-foreground/50 italic">Awaiting decoded characters...</p>
-                  )}
-                </div>
-                {step.isComplete && step.decodedSoFar && (
-                  <div className="flex items-center gap-2 text-xs text-primary font-medium">
-                    <Sparkles className="w-3 h-3" />
-                    Decoding complete — {step.decodedSoFar.length} characters recovered
-                  </div>
-                )}
-              </div>
-            )}
-
+            {/* Code Table */}
             {step?.codes && Object.keys(step.codes).length > 0 && (
               <div className="space-y-2 pt-3 border-t border-border/30">
                 <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Code Table</label>
@@ -214,11 +188,15 @@ const DecryptPage = () => {
             )}
           </aside>
 
+          {/* CENTER PANEL — Visualization */}
           <main className="flex-1 overflow-y-auto p-6 space-y-6">
             {step ? (
               <>
+                {/* Binary Input Strip */}
                 <div className="glass-panel p-5 space-y-3">
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Binary Input</h3>
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                    <Binary className="w-3.5 h-3.5 text-primary" /> Binary Input
+                  </h3>
                   <div className="flex flex-wrap gap-0.5 font-mono text-sm">
                     {step.binaryInput.split('').map((bit, i) => (
                       <span
@@ -237,10 +215,11 @@ const DecryptPage = () => {
                   </div>
                 </div>
 
-                {nodes.length > 0 && (
+                {/* Tree Visualization — visible during traversal */}
+                {nodes.length > 0 && step.phase === 'traversal' && (
                   <div className="glass-panel p-5 space-y-3">
-                    <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      Huffman Tree Traversal
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                      <GitBranch className="w-3.5 h-3.5 text-primary" /> Huffman Tree Traversal
                     </h3>
                     <div className="overflow-auto rounded-xl bg-secondary/30 p-4" style={{ maxHeight: 400 }}>
                       <svg width={width} height={height} className="min-w-full">
@@ -288,6 +267,75 @@ const DecryptPage = () => {
                     </div>
                   </div>
                 )}
+
+                {/* ASCII Conversion Table — visible during ascii-conversion and complete */}
+                {step.asciiBreakdown.length > 0 && (
+                  <div className="glass-panel p-5 space-y-4">
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                      <KeyRound className="w-3.5 h-3.5 text-primary" /> Binary → ASCII Conversion
+                    </h3>
+                    <div className="grid gap-2">
+                      {step.asciiBreakdown.map((entry, i) => (
+                        <div
+                          key={i}
+                          className={`flex items-center gap-4 px-4 py-2.5 rounded-xl font-mono text-sm transition-all duration-300
+                            ${i === step.asciiBreakdown.length - 1 && step.phase === 'ascii-conversion'
+                              ? 'bg-primary/15 border border-primary/40 ring-1 ring-primary/20 scale-[1.01]'
+                              : 'bg-secondary/30 border border-border/20'
+                            }`}
+                        >
+                          <span className="text-muted-foreground text-xs w-6">#{i + 1}</span>
+                          <span className="text-primary font-semibold text-base w-8 text-center">'{entry.char}'</span>
+                          <ArrowRight className="w-3 h-3 text-muted-foreground/50 flex-shrink-0" />
+                          <span className="text-muted-foreground tracking-wider">{entry.binary}</span>
+                          <ArrowRight className="w-3 h-3 text-muted-foreground/50 flex-shrink-0" />
+                          <span className="text-foreground font-medium">{entry.ascii}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Decoded Binary Output (secondary) */}
+                    <div className="pt-3 border-t border-border/20 space-y-1.5">
+                      <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Decoded Binary</label>
+                      <p className="font-mono text-xs text-muted-foreground break-all leading-relaxed">
+                        {step.asciiBreakdown.map(b => b.binary).join(' ')}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* FINAL PLAINTEXT — prominent display */}
+                {step.finalPlaintext && (
+                  <div className={`glass-panel p-6 space-y-3 transition-all duration-500 ${
+                    step.isComplete ? 'glow-gold border-primary/40' : 'border-border/30'
+                  }`}>
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                      <FileText className="w-3.5 h-3.5 text-primary" />
+                      Final Decoded Plaintext
+                    </h3>
+                    <p className={`font-mono break-all leading-relaxed transition-all duration-300 ${
+                      step.isComplete
+                        ? 'text-2xl font-bold gold-text'
+                        : 'text-xl font-semibold text-primary'
+                    }`}>
+                      {step.finalPlaintext}
+                    </p>
+                    {step.isComplete && (
+                      <div className="flex items-center gap-2 text-xs text-primary font-medium pt-1">
+                        <Sparkles className="w-3 h-3" />
+                        Pipeline complete — {step.binaryInput.length} bits → {step.decodedSoFar.length} chars → {step.decodedSoFar.length * 8} ASCII bits → "{step.finalPlaintext}"
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Huffman decoded characters (during traversal) */}
+                {step.phase === 'traversal' && step.decodedSoFar && (
+                  <div className="glass-panel p-4 space-y-2">
+                    <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Huffman Decoded Characters</label>
+                    <p className="font-mono text-base text-primary font-semibold break-all tracking-wide">{step.decodedSoFar}</p>
+                  </div>
+                )}
               </>
             ) : (
               <div className="flex items-center justify-center h-full">
@@ -299,22 +347,21 @@ const DecryptPage = () => {
                     </div>
                     <Sparkles className="absolute -top-2 -right-2 w-5 h-5 text-primary animate-float" />
                   </div>
-
                   <div className="space-y-3">
                     <h2 className="font-display text-2xl md:text-3xl font-bold">
                       <span className="gold-text">Huffman</span> Decryption Studio
                     </h2>
                     <p className="text-muted-foreground leading-relaxed">
-                      Enter your text in the control panel and hit <span className="text-primary font-medium">Start Decoding</span> to
-                      watch the Huffman tree traversal decode binary back into characters.
+                      Enter text and hit <span className="text-primary font-medium">Start Decoding</span> to watch the full pipeline:
+                      Binary → Huffman Decode → ASCII Conversion → Readable Plaintext.
                     </p>
                   </div>
-
                   <div className="flex flex-wrap justify-center gap-3">
                     {[
                       { icon: Binary, label: 'Binary Parsing' },
                       { icon: GitBranch, label: 'Tree Traversal' },
-                      { icon: KeyRound, label: 'Character Recovery' },
+                      { icon: KeyRound, label: 'ASCII Conversion' },
+                      { icon: FileText, label: 'Plaintext Output' },
                     ].map((f, i) => (
                       <div key={i} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-secondary/50 border border-border/30 text-sm text-muted-foreground">
                         <f.icon className="w-3.5 h-3.5 text-primary" />
@@ -322,7 +369,6 @@ const DecryptPage = () => {
                       </div>
                     ))}
                   </div>
-
                   <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground/60">
                     <ArrowRight className="w-3.5 h-3.5" />
                     <span>Type text in the left panel to begin</span>
@@ -332,16 +378,32 @@ const DecryptPage = () => {
             )}
           </main>
 
+          {/* RIGHT PANEL — Explanation */}
           <aside className="w-80 flex-shrink-0 border-l border-border/30 bg-card/50 overflow-y-auto p-5 space-y-5">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Step Explanation</h2>
             {step ? (
               <div className="step-fade-in space-y-4" key={step.stepIndex}>
+                <div className={`inline-block px-2.5 py-1 rounded-lg text-[10px] font-semibold uppercase tracking-wider ${
+                  step.phase === 'traversal' ? 'bg-accent/20 text-accent-foreground'
+                    : step.phase === 'ascii-conversion' ? 'bg-primary/20 text-primary'
+                    : 'bg-primary/30 text-primary'
+                }`}>
+                  {step.phase === 'traversal' ? '🌲 Tree Traversal' : step.phase === 'ascii-conversion' ? '🔤 ASCII Conversion' : '✅ Complete'}
+                </div>
                 <h3 className="text-base font-semibold leading-snug">{step.description}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{step.detail}</p>
                 {step.currentPath && (
                   <div className="pt-2 border-t border-border/30">
                     <label className="text-xs text-muted-foreground uppercase tracking-wider">Current Path</label>
                     <p className="font-mono text-sm text-primary mt-1">{step.currentPath}</p>
+                  </div>
+                )}
+                {step.phase === 'ascii-conversion' && step.highlightedChar && (
+                  <div className="pt-2 border-t border-border/30 space-y-1">
+                    <label className="text-xs text-muted-foreground uppercase tracking-wider">Byte Breakdown</label>
+                    <p className="font-mono text-sm text-primary">
+                      '{step.highlightedChar}' → {step.highlightedChar.charCodeAt(0)} → {step.highlightedChar.charCodeAt(0).toString(2).padStart(8, '0')}
+                    </p>
                   </div>
                 )}
               </div>
