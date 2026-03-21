@@ -1,5 +1,11 @@
 import { TreeNode } from './types';
 
+export interface AsciiBreakdown {
+  char: string;
+  binary: string;
+  ascii: number;
+}
+
 export interface DecryptionStep {
   stepIndex: number;
   description: string;
@@ -13,6 +19,9 @@ export interface DecryptionStep {
   tree: TreeNode;
   codes: Record<string, string>;
   isComplete: boolean;
+  phase: 'traversal' | 'ascii-conversion' | 'complete';
+  asciiBreakdown: AsciiBreakdown[];
+  finalPlaintext: string;
 }
 
 function cloneTree(n: TreeNode | null): TreeNode | null {
@@ -28,23 +37,30 @@ export function computeDecryptionSteps(
   const steps: DecryptionStep[] = [];
   const clonedTree = cloneTree(tree)!;
 
+  const base = {
+    binaryInput: binary,
+    tree: clonedTree,
+    codes,
+    isComplete: false,
+    phase: 'traversal' as const,
+    asciiBreakdown: [] as AsciiBreakdown[],
+    finalPlaintext: '',
+  };
+
   let decoded = '';
   let current = clonedTree;
   let path = '';
 
   steps.push({
+    ...base,
     stepIndex: 0,
     description: 'Begin Huffman Decoding',
     detail: `The binary string "${binary.slice(0, 30)}${binary.length > 30 ? '...' : ''}" (${binary.length} bits) will be decoded by traversing the Huffman tree bit by bit. Starting at the root node.`,
-    binaryInput: binary,
     currentBitIndex: -1,
     currentPath: '',
     decodedSoFar: '',
     activeNodeId: clonedTree.id,
     highlightedChar: null,
-    tree: clonedTree,
-    codes,
-    isComplete: false,
   });
 
   for (let i = 0; i < binary.length; i++) {
@@ -58,56 +74,92 @@ export function computeDecryptionSteps(
     }
 
     if (current.char !== null) {
-      // Reached a leaf — decode character
       decoded += current.char;
       steps.push({
+        ...base,
         stepIndex: steps.length,
         description: `Bit '${bit}' → go ${bit === '0' ? 'LEFT' : 'RIGHT'} → found '${current.char}'`,
         detail: `Reading bit ${i}: '${bit}' means traverse ${bit === '0' ? 'left' : 'right'}. Reached leaf node '${current.char}'. Path "${path}" decodes to character '${current.char}'. Decoded so far: "${decoded}"`,
-        binaryInput: binary,
         currentBitIndex: i,
         currentPath: path,
         decodedSoFar: decoded,
         activeNodeId: current.id,
         highlightedChar: current.char,
-        tree: clonedTree,
-        codes,
-        isComplete: false,
       });
-
-      // Reset to root
       current = clonedTree;
       path = '';
     } else {
       steps.push({
+        ...base,
         stepIndex: steps.length,
         description: `Bit '${bit}' → go ${bit === '0' ? 'LEFT' : 'RIGHT'}`,
         detail: `Reading bit ${i}: '${bit}' means traverse ${bit === '0' ? 'left' : 'right'}. Now at internal node (freq ${current.freq}). Path so far: "${path}". Continue reading bits.`,
-        binaryInput: binary,
         currentBitIndex: i,
         currentPath: path,
         decodedSoFar: decoded,
         activeNodeId: current.id,
         highlightedChar: null,
-        tree: clonedTree,
-        codes,
-        isComplete: false,
       });
     }
   }
 
+  // Huffman traversal complete step
   steps.push({
+    ...base,
     stepIndex: steps.length,
-    description: 'Decoding complete!',
-    detail: `All ${binary.length} bits have been processed. The decoded message is: "${decoded}". The Huffman tree was traversed ${decoded.length} times to recover each character.`,
-    binaryInput: binary,
+    description: 'Huffman Traversal Complete',
+    detail: `All ${binary.length} bits processed. Decoded Huffman output: "${decoded}". Now converting each character to its ASCII binary representation.`,
     currentBitIndex: binary.length,
     currentPath: '',
     decodedSoFar: decoded,
     activeNodeId: null,
     highlightedChar: null,
-    tree: clonedTree,
-    codes,
+  });
+
+  // ASCII conversion steps — one per character
+  const breakdown: AsciiBreakdown[] = [];
+  for (let i = 0; i < decoded.length; i++) {
+    const ch = decoded[i];
+    const ascii = ch.charCodeAt(0);
+    const bin = ascii.toString(2).padStart(8, '0');
+    breakdown.push({ char: ch, binary: bin, ascii });
+
+    steps.push({
+      ...base,
+      stepIndex: steps.length,
+      description: `ASCII: '${ch}' → ${ascii} → ${bin}`,
+      detail: `Character '${ch}' has ASCII value ${ascii}. In binary: ${bin}. This is byte ${i + 1} of ${decoded.length}.`,
+      phase: 'ascii-conversion',
+      currentBitIndex: binary.length,
+      currentPath: '',
+      decodedSoFar: decoded,
+      activeNodeId: null,
+      highlightedChar: ch,
+      asciiBreakdown: [...breakdown],
+      finalPlaintext: decoded.slice(0, i + 1),
+    });
+  }
+
+  // Final complete step
+  const fullBreakdown = [...breakdown];
+  const binaryOutput = fullBreakdown.map(b => b.binary).join(' ');
+  const paddingWarning = decoded.length > 0 && (decoded.length * 8) % 8 !== 0
+    ? ' Note: binary length is not a perfect multiple of 8.'
+    : '';
+
+  steps.push({
+    ...base,
+    stepIndex: steps.length,
+    description: 'Decoding Complete!',
+    detail: `Full pipeline complete. ${binary.length} Huffman bits → ${decoded.length} characters → ${decoded.length * 8} ASCII bits. Final plaintext: "${decoded}".${paddingWarning}`,
+    phase: 'complete',
+    currentBitIndex: binary.length,
+    currentPath: '',
+    decodedSoFar: decoded,
+    activeNodeId: null,
+    highlightedChar: null,
+    asciiBreakdown: fullBreakdown,
+    finalPlaintext: decoded,
     isComplete: true,
   });
 
