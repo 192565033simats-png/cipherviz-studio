@@ -49,7 +49,7 @@ const DecryptPage = () => {
   const autoPlayRef = useRef<ReturnType<typeof setInterval>>();
 
   const step = isStarted && steps.length > 0 ? steps[currentStep] : null;
-  const activeAsciiByte = step?.asciiBreakdown[step.asciiBreakdown.length - 1];
+  const activeAsciiByte = step ? step.asciiBreakdown[step.asciiBreakdown.length - 1] : undefined;
   const isComplete = step?.isComplete ?? false;
 
   const handleStart = useCallback(() => {
