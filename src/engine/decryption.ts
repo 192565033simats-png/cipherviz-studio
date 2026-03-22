@@ -21,12 +21,41 @@ export interface DecryptionStep {
   isComplete: boolean;
   phase: 'traversal' | 'ascii-conversion' | 'complete';
   asciiBreakdown: AsciiBreakdown[];
+  decodedBinary: string;
   finalPlaintext: string;
+  conversionWarning: string | null;
 }
 
 function cloneTree(n: TreeNode | null): TreeNode | null {
   if (!n) return null;
   return { ...n, left: cloneTree(n.left), right: cloneTree(n.right) };
+}
+
+function formatBinaryGroups(binary: string): string {
+  const cleaned = binary.replace(/\s+/g, '');
+  if (!cleaned) return '';
+  const groups = cleaned.match(/.{1,8}/g);
+  return groups ? groups.join(' ') : cleaned;
+}
+
+function splitFullBytes(binary: string): string[] {
+  const bytes: string[] = [];
+  for (let i = 0; i < binary.length; i += 8) {
+    const byte = binary.slice(i, i + 8);
+    if (byte.length === 8) bytes.push(byte);
+  }
+  return bytes;
+}
+
+export function binaryToText(binary: string): string {
+  let result = '';
+  for (let i = 0; i < binary.length; i += 8) {
+    const byte = binary.slice(i, i + 8);
+    if (byte.length === 8) {
+      result += String.fromCharCode(parseInt(byte, 2));
+    }
+  }
+  return result;
 }
 
 export function computeDecryptionSteps(
@@ -44,7 +73,9 @@ export function computeDecryptionSteps(
     isComplete: false,
     phase: 'traversal' as const,
     asciiBreakdown: [] as AsciiBreakdown[],
+    decodedBinary: '',
     finalPlaintext: '',
+    conversionWarning: null as string | null,
   };
 
   let decoded = '';
@@ -61,6 +92,7 @@ export function computeDecryptionSteps(
     decodedSoFar: '',
     activeNodeId: clonedTree.id,
     highlightedChar: null,
+      decodedBinary: '',
   });
 
   for (let i = 0; i < binary.length; i++) {
@@ -85,6 +117,7 @@ export function computeDecryptionSteps(
         decodedSoFar: decoded,
         activeNodeId: current.id,
         highlightedChar: current.char,
+        decodedBinary: decoded,
       });
       current = clonedTree;
       path = '';
@@ -99,67 +132,107 @@ export function computeDecryptionSteps(
         decodedSoFar: decoded,
         activeNodeId: current.id,
         highlightedChar: null,
+        decodedBinary: decoded,
       });
     }
   }
+
+  const normalizedDecodedBinary = decoded.replace(/\s+/g, '');
+  const isStrictBinary = /^[01]*$/.test(normalizedDecodedBinary);
+  const completeByteLength =
+    normalizedDecodedBinary.length - (normalizedDecodedBinary.length % 8);
+  const convertibleBinary = normalizedDecodedBinary.slice(0, completeByteLength);
+  const trailingBits = normalizedDecodedBinary.slice(completeByteLength);
+  const conversionWarning = !isStrictBinary
+    ? 'Warning: Huffman output contains non-binary symbols, so Binary → ASCII conversion was skipped.'
+    : trailingBits.length > 0
+      ? `Warning: ${trailingBits.length} trailing bit(s) were ignored because they do not form a full 8-bit byte.`
+      : null;
 
   // Huffman traversal complete step
   steps.push({
     ...base,
     stepIndex: steps.length,
     description: 'Huffman Traversal Complete',
-    detail: `All ${binary.length} bits processed. Decoded Huffman output: "${decoded}". Now converting each character to its ASCII binary representation.`,
+    detail: `All ${binary.length} bits processed. Huffman decoded binary output: "${formatBinaryGroups(normalizedDecodedBinary)}". Next: Final Step: Binary to ASCII Conversion.`,
     currentBitIndex: binary.length,
     currentPath: '',
-    decodedSoFar: decoded,
+    decodedSoFar: normalizedDecodedBinary,
     activeNodeId: null,
     highlightedChar: null,
+    decodedBinary: normalizedDecodedBinary,
   });
 
-  // ASCII conversion steps — one per character
+  steps.push({
+    ...base,
+    stepIndex: steps.length,
+    phase: 'ascii-conversion',
+    description: 'Final Step: Binary to ASCII Conversion',
+    detail: isStrictBinary
+      ? `Split the Huffman decoded binary into 8-bit bytes, convert each byte with parseInt(byte, 2), then map it with String.fromCharCode().${conversionWarning ? ` ${conversionWarning}` : ''}`
+      : `${conversionWarning} The current decoded output is preserved as plaintext.`,
+    currentBitIndex: binary.length,
+    currentPath: '',
+    decodedSoFar: normalizedDecodedBinary,
+    activeNodeId: null,
+    highlightedChar: null,
+    decodedBinary: normalizedDecodedBinary,
+    conversionWarning,
+  });
+
+  // ASCII conversion steps — one per full byte
   const breakdown: AsciiBreakdown[] = [];
-  for (let i = 0; i < decoded.length; i++) {
-    const ch = decoded[i];
-    const ascii = ch.charCodeAt(0);
-    const bin = ascii.toString(2).padStart(8, '0');
-    breakdown.push({ char: ch, binary: bin, ascii });
+  const fullBytes = isStrictBinary ? splitFullBytes(convertibleBinary) : [];
+  let runningPlaintext = '';
+
+  for (let i = 0; i < fullBytes.length; i++) {
+    const byte = fullBytes[i];
+    const ascii = parseInt(byte, 2);
+    const ch = String.fromCharCode(ascii);
+    runningPlaintext += ch;
+    breakdown.push({ char: ch, binary: byte, ascii });
 
     steps.push({
       ...base,
       stepIndex: steps.length,
-      description: `ASCII: '${ch}' → ${ascii} → ${bin}`,
-      detail: `Character '${ch}' has ASCII value ${ascii}. In binary: ${bin}. This is byte ${i + 1} of ${decoded.length}.`,
+      description: `Byte ${i + 1}: ${byte} → ${ascii} → '${ch}'`,
+      detail: `Read byte ${i + 1}/${fullBytes.length}: ${byte}. Decimal ASCII = ${ascii}, mapped character = '${ch}'.`,
       phase: 'ascii-conversion',
       currentBitIndex: binary.length,
       currentPath: '',
-      decodedSoFar: decoded,
+      decodedSoFar: normalizedDecodedBinary,
       activeNodeId: null,
       highlightedChar: ch,
+      decodedBinary: normalizedDecodedBinary,
       asciiBreakdown: [...breakdown],
-      finalPlaintext: decoded.slice(0, i + 1),
+      finalPlaintext: runningPlaintext,
+      conversionWarning,
     });
   }
 
   // Final complete step
   const fullBreakdown = [...breakdown];
-  const binaryOutput = fullBreakdown.map(b => b.binary).join(' ');
-  const paddingWarning = decoded.length > 0 && (decoded.length * 8) % 8 !== 0
-    ? ' Note: binary length is not a perfect multiple of 8.'
-    : '';
+  const finalPlaintext = isStrictBinary
+    ? binaryToText(convertibleBinary)
+    : decoded;
 
   steps.push({
     ...base,
     stepIndex: steps.length,
     description: 'Decoding Complete!',
-    detail: `Full pipeline complete. ${binary.length} Huffman bits → ${decoded.length} characters → ${decoded.length * 8} ASCII bits. Final plaintext: "${decoded}".${paddingWarning}`,
+    detail: isStrictBinary
+      ? `Full pipeline complete. ${binary.length} Huffman bits → ${normalizedDecodedBinary.length} decoded bits → ${fullBreakdown.length} ASCII byte(s) → plaintext "${finalPlaintext}".${conversionWarning ? ` ${conversionWarning}` : ''}`
+      : `Huffman decoding complete. Output is "${decoded}". Binary → ASCII conversion was skipped because output is not strict binary.`,
     phase: 'complete',
     currentBitIndex: binary.length,
     currentPath: '',
-    decodedSoFar: decoded,
+    decodedSoFar: normalizedDecodedBinary,
     activeNodeId: null,
     highlightedChar: null,
+    decodedBinary: normalizedDecodedBinary,
     asciiBreakdown: fullBreakdown,
-    finalPlaintext: decoded,
+    finalPlaintext,
+    conversionWarning,
     isComplete: true,
   });
 
