@@ -1,9 +1,9 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { Navbar } from '../components/Navbar';
 import { CustomCursor } from '../components/CustomCursor';
+import { computeAllSteps } from '../engine/huffman';
 import { computeDecryptionSteps, DecryptionStep } from '../engine/decryption';
 import { TreeNode } from '../engine/types';
-import { getLatestEncodingSession } from '../engine/huffmanSession';
 import { Play, SkipForward, SkipBack, RotateCcw, Pause, Unlock, Sparkles, ArrowRight, Binary, GitBranch, FileText } from 'lucide-react';
 
 interface LayoutNode {
@@ -33,42 +33,6 @@ function collectNodes(node: LayoutNode | null, nodes: LayoutNode[]) {
   collectNodes(node.right, nodes);
 }
 
-const EMPTY_TREE: TreeNode = {
-  id: 'decryption-empty-root',
-  char: null,
-  freq: 0,
-  left: null,
-  right: null,
-};
-
-function buildErrorStep(
-  binaryInput: string,
-  message: string,
-  tree: TreeNode | null,
-  codes: Record<string, string>
-): DecryptionStep[] {
-  const fallbackTree = tree ?? EMPTY_TREE;
-  return [
-    {
-      stepIndex: 0,
-      description: 'Decoding Stopped',
-      detail: message,
-      binaryInput,
-      currentBitIndex: -1,
-      currentPath: '',
-      decodedSoFar: '',
-      activeNodeId: null,
-      highlightedChar: null,
-      tree: fallbackTree,
-      codes,
-      isComplete: true,
-      phase: 'complete',
-      finalPlaintext: '',
-      warning: message,
-    },
-  ];
-}
-
 const DecryptPage = () => {
   const [input, setInput] = useState('');
   const [steps, setSteps] = useState<DecryptionStep[]>([]);
@@ -81,47 +45,20 @@ const DecryptPage = () => {
   const isComplete = step?.isComplete ?? false;
 
   const handleStart = useCallback(() => {
-    const binaryInput = input.trim();
-    if (!binaryInput) return;
-
-    const session = getLatestEncodingSession();
-    const sessionTree = session?.tree ?? null;
-    const sessionCodes = session?.codes ?? {};
-
-    if (/[^01]/.test(binaryInput)) {
-      setSteps(buildErrorStep(binaryInput, 'Invalid input: Only binary allowed', sessionTree, sessionCodes));
+    if (!input.trim()) return;
+    const encSteps = computeAllSteps(input.trim());
+    const finalStep = encSteps[encSteps.length - 1];
+    const binary = finalStep.snapshot.encodedOutput;
+    // Use snapshot.tree (the complete Huffman tree), fallback to priorityQueue[0]
+    const tree = finalStep.snapshot.tree ?? finalStep.snapshot.priorityQueue[0];
+    const codes = finalStep.snapshot.codes;
+    if (tree && binary) {
+      const decSteps = computeDecryptionSteps(binary, tree, codes);
+      setSteps(decSteps);
       setCurrentStep(0);
       setIsStarted(true);
-      setAutoPlaying(false);
-      return;
+      setAutoPlaying(true);
     }
-
-    if (!sessionTree) {
-      const missingTreeMessage = 'Missing Huffman tree from encoding. Run encryption first, then decode with the same tree.';
-      setSteps(buildErrorStep(binaryInput, missingTreeMessage, null, {}));
-      setCurrentStep(0);
-      setIsStarted(true);
-      setAutoPlaying(false);
-      return;
-    }
-
-    const decSteps = computeDecryptionSteps(binaryInput, sessionTree, sessionCodes);
-    const finalStep = decSteps[decSteps.length - 1];
-    const decodedOutput = finalStep?.finalPlaintext ?? '';
-
-    if (decodedOutput === binaryInput && /^[01]+$/.test(decodedOutput)) {
-      const echoMessage = 'Decoding failed: output remained binary. Verify that decoding uses character leaf nodes from the original Huffman tree.';
-      setSteps(buildErrorStep(binaryInput, echoMessage, sessionTree, sessionCodes));
-      setCurrentStep(0);
-      setIsStarted(true);
-      setAutoPlaying(false);
-      return;
-    }
-
-    setSteps(decSteps);
-    setCurrentStep(0);
-    setIsStarted(true);
-    setAutoPlaying(true);
   }, [input]);
 
   const next = useCallback(() => setCurrentStep(s => Math.min(s + 1, steps.length - 1)), [steps.length]);
