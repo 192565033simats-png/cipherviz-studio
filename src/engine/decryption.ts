@@ -23,6 +23,38 @@ function cloneTree(n: TreeNode | null): TreeNode | null {
   return { ...n, left: cloneTree(n.left), right: cloneTree(n.right) };
 }
 
+function isLeafNode(node: TreeNode): boolean {
+  return node.left === null && node.right === null;
+}
+
+function validateTreeStructure(root: TreeNode): string | null {
+  const stack: TreeNode[] = [root];
+
+  while (stack.length > 0) {
+    const node = stack.pop()!;
+    const leaf = isLeafNode(node);
+
+    if (leaf) {
+      if (node.char === null || node.char.length !== 1) {
+        return `Invalid Huffman tree: leaf node "${node.id}" must contain exactly one character.`;
+      }
+      continue;
+    }
+
+    if (node.char !== null) {
+      return `Invalid Huffman tree: internal node "${node.id}" must have char = null.`;
+    }
+
+    if (!node.left || !node.right) {
+      return `Invalid Huffman tree: internal node "${node.id}" must have both left and right children.`;
+    }
+
+    stack.push(node.left, node.right);
+  }
+
+  return null;
+}
+
 export function computeDecryptionSteps(
   binary: string,
   tree: TreeNode,
@@ -32,6 +64,7 @@ export function computeDecryptionSteps(
   const clonedTree = cloneTree(tree)!;
   const sanitizedBinary = binary.replace(/\s+/g, '');
   const invalidBitIndex = sanitizedBinary.search(/[^01]/);
+  const structureError = validateTreeStructure(clonedTree);
 
   const base = {
     binaryInput: sanitizedBinary,
@@ -74,6 +107,24 @@ export function computeDecryptionSteps(
     return steps;
   }
 
+  if (structureError) {
+    steps.push({
+      ...base,
+      stepIndex: steps.length,
+      description: 'Decoding Stopped',
+      detail: structureError,
+      phase: 'complete',
+      currentBitIndex: 0,
+      currentPath: '',
+      decodedSoFar: '',
+      activeNodeId: null,
+      highlightedChar: null,
+      warning: structureError,
+      isComplete: true,
+    });
+    return steps;
+  }
+
   let decoded = '';
   let current = clonedTree;
   let path = '';
@@ -105,8 +156,36 @@ export function computeDecryptionSteps(
 
     current = nextNode;
 
-    if (current.char !== null) {
+    if (isLeafNode(current)) {
+      if (current.char === null || current.char.length !== 1) {
+        const warning = `Invalid leaf at node "${current.id}": expected a single character.`;
+        steps.push({
+          ...base,
+          stepIndex: steps.length,
+          description: 'Decoding Stopped',
+          detail: warning,
+          phase: 'complete',
+          currentBitIndex: i,
+          currentPath: path,
+          decodedSoFar: decoded,
+          activeNodeId: current.id,
+          highlightedChar: null,
+          finalPlaintext: decoded,
+          warning,
+          isComplete: true,
+        });
+        return steps;
+      }
+
       decoded += current.char;
+      console.debug('[Huffman decode] leaf reached', {
+        bitIndex: i,
+        path,
+        char: current.char,
+        nodeId: current.id,
+        decodedSoFar: decoded,
+      });
+
       steps.push({
         ...base,
         stepIndex: steps.length,
