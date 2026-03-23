@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { HuffmanEngine, Step } from './types';
 import { computeAllSteps } from './huffman';
+import { saveLatestEncodingSession } from './huffmanSession';
 
 const idleStep: Step = {
   index: 0,
@@ -39,7 +40,20 @@ export function useHuffmanEngine(): HuffmanEngine {
 
   const start = useCallback((input: string) => {
     if (!input.trim()) return;
-    const allSteps = computeAllSteps(input.trim());
+    const normalizedInput = input.trim();
+    const allSteps = computeAllSteps(normalizedInput);
+    const finalStep = allSteps[allSteps.length - 1];
+    const finalTree = finalStep?.snapshot.tree;
+
+    if (finalTree) {
+      saveLatestEncodingSession({
+        input: normalizedInput,
+        encodedOutput: finalStep.snapshot.encodedOutput,
+        tree: finalTree,
+        codes: finalStep.snapshot.codes,
+      });
+    }
+
     setSteps(allSteps);
     setCurrentStep(0);
     setIsStarted(true);
